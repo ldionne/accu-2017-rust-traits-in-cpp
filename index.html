@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>Type erasure with Hana</title>
+        <meta name="author" content="Louis Dionne">
+
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/league.css" id="theme">
+        <link rel="stylesheet" href="css/custom.css">
+
+        <!-- Code syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown=""
+                         data-separator="^====+$"
+                         data-separator-vertical="^----+$"
+                         data-notes="^Note:">
+                <script type="text/template">
+
+## Type erasure with Hana
+### Louis Dionne
+
+----
+
+<img src="img/A9.png" alt="A9"/>
+
+https://a9.com/careers
+
+==============================================================================
+
+
+
+==============================================================================
+
+# Thank you
+
+<span class="fragment fade-in">
+http://ldionne.com <br>
+http://github.com/boostorg/hana
+</span>
+
+
+                </script>
+                </section>
+            </div>
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
+        <!-- Required for the sampler.js plugin -->
+        <script src="lib/js/jquery.min.js"></script>
+
+        <script>
+            Reveal.initialize({
+                slideNumber: false, // 'c/t' -> useful when authoring to know how many slides there are
+                history: true,
+                transition: 'none',
+
+                dependencies: [
+                    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                    { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+                    { src: 'plugin/math/math.js', async: true },
+                    { src: 'plugin/sampler/sampler.js' },
+                    { src: 'plugin/line-numbers/line-numbers.js' }
+                ]
+            });
+
+            // Slides marked with <!-- .slide: class="skip" --> will
+            // be hidden from the presentation. This is handy for removing
+            // material that I think I won't have time to cover, but without
+            // removing the slide.
+            Reveal.addEventListener('ready', function(event) {
+              $(".slides .skip").each(function(index, slide) {
+                slide.remove();
+              });
+              Reveal.sync();
+            });
+        </script>
+    </body>
+</html>

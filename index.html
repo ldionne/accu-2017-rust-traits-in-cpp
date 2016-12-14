@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-        <title>Type erasure with Hana</title>
+        <title>Rust traits in C++</title>
         <meta name="author" content="Louis Dionne">
 
         <link rel="stylesheet" href="css/reveal.css">
@@ -33,7 +33,7 @@
                          data-notes="^Note:">
                 <script type="text/template">
 
-## Type erasure with Hana
+## Rust traits in C++
 ### Louis Dionne
 
 ----
@@ -44,17 +44,254 @@ https://a9.com/careers
 
 ==============================================================================
 
+### Consider a simple class hierarchy
 
+```c++
+struct Shape { virtual int area() const = 0; };
 
-==============================================================================
+struct Square : Shape { virtual int area() const override { ... } };
+struct Circle : Shape { virtual int area() const override { ... } };
+```
 
-# Thank you
+----
+
+### Try to add a new type that you don't control
+
+```c++
+namespace lib {
+  struct Hexagon { ... };
+}
+
+void draw(Shape*) { ... } // Can't accept an Hexagon!
+```
+
+----
+
+### How often have you seen this?
+
+```c++
+struct Shape {
+  virtual int area() const = 0;
+  virtual int radius() const = 0;
+};
+
+struct Square : Shape {
+  virtual int area() const { ... }
+  virtual int radius() const {
+    assert(false && "Square does not support the radius method!");
+  }
+};
+```
+
+----
+
+### By the way, are you happy with those allocations?
+
+```c++
+void draw(Shape*) { ... }
+
+Shape* foo = new Square{...};
+draw(foo);
+```
+
+----
+
+### Also, can you spot the problem here?
+
+```c++
+struct Ellipsis : Shape {
+  virtual int area() const override { ... }
+  std::string name;
+};
+
+Shape* foo = new Ellipsis{"foo"};
+draw(foo);
+delete foo;
+```
+
+----
+
+### What if I need to copy those things?
+
+```c++
+std::vector<Shape*> shapes = ...;
+
+std::vector<Shape*> new_shapes = shapes;
+for (auto* shape : new_shapes) {
+  shape->scale(2); // WRONG!!!
+}
+```
+
+====
+
+### Bottom line: inheritance is a poor mechanism
+
+----
+
+### But why?
+### Just listen to Sean Parent
+
+----
+
+### Requirement of a polymorphic type comes from its use
+#### A type is not polymorphic by itself, the usage is
+
+----
+
+### Inheritance-based polymorphism breaks value semantics
+
+----
+
+### Hierarchies are not extensible and intrusive
+
+----
+
+### Inheritance couples polymorphism with storage
+
+====
+
+### Enter Rust traits
+
+```rust
+struct Circle {
+  x: f64,
+  y: f64,
+  radius: f64,
+}
+
+trait HasArea {
+  fn area(&self) -> f64;
+}
+
+impl HasArea for Circle {
+  fn area(&self) -> f64 {
+    std::f64::consts::PI * (self.radius * self.radius)
+  }
+}
+```
+
+----
+
+### Powerful and simple to use
+
+```rust
+fn print_area<T: HasArea>(shape: T) {
+  println!("This shape has an area of {}", shape.area());
+}
+
+fn main() {
+  let c = Circle {
+    x: 0.0f64,
+    y: 0.0f64,
+    radius: 1.0f64,
+  };
+
+  print_area(c);
+}
+```
+
+----
+
+### Only problem: it's not C++
+
+====
+
+### Dyno got your back
+
+```c++
+struct Circle {
+  int x, y, radius;
+};
+
+struct HasArea : decltype(dyno::requires(
+  "area"_s = dyno::function<int (dyno::T const&)>
+)) { };
+
+template <>
+auto const dyno::concept_map<HasArea, Circle> = dyno::make_concept_map(
+  "area"_s = [](Circle const& circle) {
+    return 3.1415 * circle.radius * circle.radius;
+  }
+);
+```
+
+----
+
+### Easy to use
+
+```c++
+void print_area(has_area shape) {
+  std::cout << "This shape has an area of " << shape.area();
+}
+
+int main() {
+  Circle cirle{0, 0, 1};
+  print_area(circle);
+}
+```
+
+====
+
+### The only missing part
+
+```c++
+struct has_area {
+  template <typename Shape>
+  has_area(Shape shape) : shape_{shape} { }
+  int area() const { return shape_.virtual_("area"_s)(shape_); }
+private:
+  dyno::poly<HasArea> shape_;
+};
+```
+
+----
+
+### Can customize storage
+
+```c++
+struct has_area {
+  ...
+private:
+  dyno::poly<HasArea>;                          // heap
+  dyno::poly<HasArea, dyno::remote_storage>;    // heap
+  dyno::poly<HasArea, dyno::local_storage<8>>;  // stack
+  dyno::poly<HasArea, dyno::sbo_storage<8>>;    // stack, heap fallback
+  dyno::poly<HasArea, dyno::non_owning_storage>;// just a ref
+};
+```
+
+----
+
+### Can customize vtable
+
+```c++
+struct has_area {
+  ...
+private:
+  using VTable = dyno::vtable<
+    dyno::local<dyno::only<decltype("area"_s)>>,
+    dyno::remote<dyno::everything_else>
+  >;
+  dyno::poly<HasArea, VTable> shape_;
+};
+```
+
+====
+
+### Bottom line
+
+- More flexible than inheritance
+- Respects value semantics
+- Full control over performance
+
+====
+
+# Try it out!
 
 <span class="fragment fade-in">
-http://ldionne.com <br>
-http://github.com/boostorg/hana
+http://github.com/ldionne/dyno <br>
+http://ldionne.com
 </span>
-
 
                 </script>
                 </section>

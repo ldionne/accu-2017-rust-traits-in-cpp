@@ -1,7 +1,7 @@
 The content of the presentation itself, which is not part of the reveal.js
 framework, is licensed as follows:
 ------------------------------------------------------------------------------
-Copyright 2016 Louis Dionne
+Copyright 2017 Louis Dionne
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
